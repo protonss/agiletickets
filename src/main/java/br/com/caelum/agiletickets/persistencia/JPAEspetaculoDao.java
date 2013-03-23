@@ -21,9 +21,11 @@ public class JPAEspetaculoDao implements Agenda {
 		this.relogio = relogio;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<Espetaculo> espetaculos() {
-		return manager.createQuery("select e from Espetaculo e").getResultList();
+		return manager.createQuery("select e from Espetaculo e")
+				.getResultList();
 	}
 
 	@Override
@@ -31,12 +33,14 @@ public class JPAEspetaculoDao implements Agenda {
 		manager.persist(espetaculo);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<Sessao> proximasSessoes(int maximo) {
-		return manager.createQuery("select s from Sessao s where s.inicio > :hoje order by s.inicio")
-					.setParameter("hoje", relogio.agora())
-					.setMaxResults(maximo)
-					.getResultList();
+		return manager
+				.createQuery(
+						"select s from Sessao s where s.inicio > :hoje order by s.inicio")
+				.setParameter("hoje", relogio.agora()).setMaxResults(maximo)
+				.getResultList();
 	}
 
 	@Override
