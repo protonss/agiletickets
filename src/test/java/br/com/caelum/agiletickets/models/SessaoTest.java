@@ -18,6 +18,7 @@ public class SessaoTest {
 	public void naoDeveVender3ingressoSeHa2vagas() throws Exception {
 		Sessao sessao = new Sessao();
 		sessao.setTotalIngressos(2);
+		
 		Assert.assertFalse(sessao.podeReservar(3));
 	}
 
