@@ -51,21 +51,26 @@ public class EspetaculosController {
 	@Post
 	@Path("/espetaculos")
 	public void adiciona(Espetaculo espetaculo) {
+
+		this.validaEspetaculo(espetaculo);
+
+		agenda.cadastra(espetaculo);
+		result.redirectTo(this).lista();
+	}
+
+	private void validaEspetaculo(Espetaculo espetaculo) {
 		// aqui eh onde fazemos as varias validacoes
 		// se nao tiver nome, avisa o usuario
 		// se nao tiver descricao, avisa o usuario
 		if (Strings.isNullOrEmpty(espetaculo.getNome())) {
 			validator.add(new ValidationMessage(
-					"Nome do espetáculo nao pode estar em branco", ""));
+					"Nome do espetaculo nao pode estar em branco", ""));
 		}
 		if (Strings.isNullOrEmpty(espetaculo.getDescricao())) {
-			validator.add(new ValidationMessage(
-					"Descricao do espetaculo nao pode estar em branco", ""));
+			validator.add(new ValidationMessage("Descricao do espetaculo nao pode estar em branco", ""));
 		}
-		validator.onErrorRedirectTo(this).lista();
 
-		agenda.cadastra(espetaculo);
-		result.redirectTo(this).lista();
+		validator.onErrorRedirectTo(this).lista();
 	}
 
 	@Get
@@ -82,12 +87,22 @@ public class EspetaculosController {
 	@Post
 	@Path("/sessao/{sessaoId}/reserva")
 	public void reserva(Long sessaoId, final Integer quantidade) {
+		
 		Sessao sessao = agenda.sessao(sessaoId);
 		if (sessao == null) {
 			result.notFound();
 			return;
 		}
 
+		this.validaSessao(quantidade, sessao);
+
+		sessao.reserva(quantidade);
+		result.include("message", "Sessao reservada com sucesso");
+		result.redirectTo(IndexController.class).index();
+		
+	}
+
+	private void validaSessao(final Integer quantidade, Sessao sessao) {
 		if (quantidade < 1) {
 			validator.add(new ValidationMessage(
 					"Voce deve escolher um lugar ou mais", ""));
@@ -100,18 +115,12 @@ public class EspetaculosController {
 
 		// em caso de erro, redireciona para a lista de sessao
 		validator.onErrorRedirectTo(this).sessao(sessao.getId());
-
-		sessao.reserva(quantidade);
-		result.include("message", "Sessao reservada com sucesso");
-
-		result.redirectTo(IndexController.class).index();
 	}
 
 	@Get
 	@Path("/espetaculo/{espetaculoId}/sessoes")
 	public void sessoes(Long espetaculoId) {
 		Espetaculo espetaculo = carregaEspetaculo(espetaculoId);
-
 		result.include("espetaculo", espetaculo);
 	}
 
@@ -119,17 +128,15 @@ public class EspetaculosController {
 	@Path("/espetaculo/{espetaculoId}/sessoes")
 	public void cadastraSessoes(Long espetaculoId, LocalDate inicio,
 			LocalDate fim, LocalTime horario, Periodicidade periodicidade) {
-		Espetaculo espetaculo = carregaEspetaculo(espetaculoId);
+		Espetaculo espetaculo = this.carregaEspetaculo(espetaculoId);
 
 		// aqui faz a magica!
 		// cria sessoes baseado no periodo de inicio e fim passados pelo usuario
-		List<Sessao> sessoes = espetaculo.criaSessoes(inicio, fim, horario,
-				periodicidade);
+		List<Sessao> sessoes = espetaculo.criaSessoes(inicio, fim, horario, periodicidade);
 
 		agenda.agende(sessoes);
 
-		result.include("message", sessoes.size()
-				+ " sessoes criadas com sucesso");
+		result.include("message", sessoes.size() + " sessoes criadas com sucesso");
 		result.redirectTo(this).lista();
 	}
 
